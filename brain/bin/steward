@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
+const USAGE = `steward <command>
+  state                       the StateSnapshot
+  tasks                       open tasks, ranked
+  add "<title>"               create a task
+  done <id>                   complete a task
+  events                      tail the SSE stream
+  raw <METHOD> <path> [json]  any endpoint, e.g. raw PATCH /tasks/<id> '{"priority":3}'`;
+
+const home = process.env.STEWARD_HOME || join(homedir(), 'Library', 'Application Support', 'Steward');
+const [cmd, ...args] = process.argv.slice(2);
+if (!cmd || cmd === 'help' || cmd === '--help') {
+  console.log(USAGE);
+  process.exit(0);
+}
+
+let base, token;
+try {
+  base = `http://127.0.0.1:${readFileSync(join(home, 'brain.port'), 'utf8').trim()}`;
+  token = readFileSync(join(home, 'brain.token'), 'utf8').trim();
+} catch {
+  console.error(`No running brain found in ${home} (brain.port / brain.token missing).`);
+  process.exit(1);
+}
+
+async function call(method, path, body) {
+  const res = await fetch(base + path, {
+    method,
+    headers: { authorization: `Bearer ${token}`, ...(body !== undefined && { 'content-type': 'application/json' }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (path === '/events' && res.ok) return res;
+  const data = await res.json();
+  if (!res.ok) {
+    console.error(`${res.status} ${data.error?.code}: ${data.error?.message}`);
+    process.exit(1);
+  }
+  return data;
+}
+const print = (data) => console.log(JSON.stringify(data, null, 2));
+
+switch (cmd) {
+  case 'state':
+    print(await call('GET', '/state'));
+    break;
+  case 'tasks':
+    for (const t of (await call('GET', '/tasks?status=inbox,todo,doing,waiting')).items) {
+      console.log(`${t.id}  ${String(t.score).padStart(3)}  ${t.status.padEnd(7)}  ${t.title}${t.scoreReasons.length ? `  (${t.scoreReasons.join(', ')})` : ''}`);
+    }
+    break;
+  case 'add':
+    print(await call('POST', '/tasks', { title: args.join(' ') }));
+    break;
+  case 'done':
+    print(await call('POST', `/tasks/${args[0]}/complete`));
+    break;
+  case 'events':
+    for await (const chunk of (await call('GET', '/events')).body) process.stdout.write(chunk);
+    break;
+  case 'raw':
+    if (args.length < 2) {
+      console.error(USAGE);
+      process.exit(1);
+    }
+    print(await call(args[0].toUpperCase(), args[1], args[2] === undefined ? undefined : JSON.parse(args[2])));
+    break;
+  default:
+    console.error(USAGE);
+    process.exit(1);
+}

@@ -1,0 +1,6 @@
+export default `
+ALTER TABLE approvals DROP COLUMN preview;
+ALTER TABLE approvals ADD COLUMN note TEXT NOT NULL DEFAULT '';
+ALTER TABLE meetings ADD COLUMN startKnown INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE meetings ADD COLUMN cancelledAt INTEGER
+`;
