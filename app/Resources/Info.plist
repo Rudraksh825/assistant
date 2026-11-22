@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>app.steward.mac</string>
+	<key>CFBundleName</key>
+	<string>Steward</string>
+	<key>CFBundleDisplayName</key>
+	<string>Steward</string>
+	<key>CFBundleExecutable</key>
+	<string>Steward</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>0</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSSupportsAutomaticTermination</key>
+	<false/>
+	<key>NSSupportsSuddenTermination</key>
+	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Steward listens while you hold the voice hotkey so you can dictate a capture or a message to the agent.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Steward turns what you dictate into text on this Mac.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Steward asks other apps to bring the right window forward, such as the editor or terminal for a coding session.</string>
+	<key>StewardRepoPath</key>
+	<string></string>
+</dict>
+</plist>
