@@ -1,10 +1,10 @@
+import AppKit
 import SwiftUI
 
 /// State dot; pulses a halo while the session needs the user (`waiting`, `blocked`).
 public struct StateDot: View {
     let state: SessionState
     let size: CGFloat
-    @State private var pulsing = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(_ state: SessionState, size: CGFloat = 7) {
@@ -21,14 +21,70 @@ public struct StateDot: View {
             .frame(width: size, height: size)
             .background {
                 if attention && !reduceMotion && !DesignSettings.shared.reduceMotion {
-                    Circle().fill(color.opacity(0.45))
-                        .scaleEffect(pulsing ? 2.6 : 1)
-                        .opacity(pulsing ? 0 : 0.8)
-                        .animation(.easeOut(duration: state == .blocked ? 0.9 : 1.5).repeatForever(autoreverses: false), value: pulsing)
+                    PulseHalo(color: color.opacity(0.45), period: state == .blocked ? 0.9 : 1.5)
                 }
             }
-            .onAppear { pulsing = true }
             .accessibilityLabel(state.rawValue)
+    }
+}
+
+/// The halo pulses as a Core Animation layer animation, which runs in the render server. A SwiftUI
+/// `repeatForever` re-lays out the whole hosting window every frame (~28% CPU at idle with two dots up).
+private struct PulseHalo: NSViewRepresentable {
+    let color: Color
+    let period: Double
+
+    func makeNSView(context: Context) -> HaloView { HaloView() }
+
+    func updateNSView(_ view: HaloView, context: Context) {
+        view.pulse(color: NSColor(color), period: period)
+    }
+
+    final class HaloView: NSView {
+        private let halo = CALayer()
+        private var period = 0.0
+
+        init() {
+            super.init(frame: .zero)
+            wantsLayer = true
+            halo.opacity = 0
+            layer?.addSublayer(halo)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+        override func layout() {
+            super.layout()
+            halo.frame = bounds
+            halo.cornerRadius = bounds.width / 2
+        }
+
+        private var color = NSColor.clear
+
+        override func viewDidChangeEffectiveAppearance() {
+            effectiveAppearance.performAsCurrentDrawingAppearance { halo.backgroundColor = color.cgColor }
+        }
+
+        func pulse(color: NSColor, period: Double) {
+            self.color = color
+            viewDidChangeEffectiveAppearance()
+            guard period != self.period else { return }
+            self.period = period
+            let scale = CABasicAnimation(keyPath: "transform.scale")
+            scale.fromValue = 1
+            scale.toValue = 2.6
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 0.8
+            fade.toValue = 0
+            let group = CAAnimationGroup()
+            group.animations = [scale, fade]
+            group.duration = period
+            group.repeatCount = .infinity
+            group.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            halo.add(group, forKey: "pulse")
+        }
     }
 }
 
