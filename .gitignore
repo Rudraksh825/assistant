@@ -1,0 +1,32 @@
+# Build output
+build/
+.build/
+.build-*/
+dist/
+node_modules/
+*.xcuserstate
+DerivedData/
+.swiftpm/
+
+# Private: everything personal lives outside the repo in
+# ~/Library/Application Support/Steward/. These patterns are a second fence.
+.env
+.env.*
+!.env.example
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+secrets*
+private/
+local/
+*.local.json
+*.local.md
+logs/
+*.log
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+.claude/settings.local.json
